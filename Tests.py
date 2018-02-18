@@ -11,7 +11,7 @@ class TestFetcherScript(unittest.TestCase):
 
         elements = Fetcher.parseAllDependencyFromPom(pomFile)
 
-        self.assertEqual(2, len(elements))
+        self.assertEqual(4, len(elements))
 
         self.assertEqual("joda-time", elements[0].find(Fetcher.namespace + "artifactId").text)
         self.assertEqual("cxf-rt-frontend-jaxrs", elements[1].find(Fetcher.namespace + "artifactId").text)
@@ -49,6 +49,16 @@ class TestFetcherScript(unittest.TestCase):
 
         mvnCommand = "mvn install:install-file -Dfile=cxf-rt-frontend-jaxrs-2.7.11.jar -DgroupId=org.apache.cxf -DartifactId=cxf-rt-frontend-jaxrs -Dversion=2.7.11 -Dpackaging=jar -DgeneratePom=true"
         self.assertEqual(mvnCommand, lines[2].rstrip())
+
+
+    def testCreateAccurateFileName(self):
+        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[2]
+        fileName = Fetcher.getFileName("./lib", element)
+        self.assertEqual("google-api-client-1.17.0-rc.jar", fileName)
+
+        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[3]
+        fileName = Fetcher.getFileName("./lib", element)
+        self.assertEqual("google-api-client-java6-1.17.0-rc.jar", fileName)
 
 
 if __name__ == '__main__':

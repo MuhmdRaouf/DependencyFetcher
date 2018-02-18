@@ -29,10 +29,11 @@ class Fetcher(object):
     def getFileName(cls, libPath, element):
         artifactId = element[1].text
         version = element[2].text
-        for fileName in os.listdir(libPath):
+        for fileName in sorted(os.listdir(libPath)):
             if fileName.endswith(".jar"):
                 if (artifactId in fileName) and (version in fileName):
                     return fileName;
+
 
     @classmethod
     def createShellScript(cls, pathToPom, pathToLib, pathToOutput):
