@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import os
 
+import sys
+
 
 class Fetcher(object):
     namespace = "{http://maven.apache.org/POM/4.0.0}"
@@ -50,3 +52,10 @@ class Fetcher(object):
         outputFile.writelines("\n".join(outputLines));
 
         outputFile.close()
+
+if __name__ == "__main__":
+    pathToPom = sys.argv[1]
+    pathToLib = sys.argv[2]
+    pathToOutput = sys.argv[3]
+
+    Fetcher.createShellScript(pathToPom, pathToLib, pathToOutput)
