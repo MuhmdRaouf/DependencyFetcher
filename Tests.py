@@ -1,64 +1,13 @@
 import unittest
-import xml.etree.ElementTree as ET
+import os
 
-
-class Fetcher(object):
-    namespace = "{http://maven.apache.org/POM/4.0.0}"
-    @classmethod
-    def parseAllDependencyFromPom(cls, pomFile):
-        root = ET.fromstring(pomFile)
-        return root.find(cls.namespace + "dependencies").findall(cls.namespace + "dependency")
-
-    @classmethod
-    def transform(cls, element, jarName):
-        groupId = element[0].text
-        artfacttId = element[1].text
-        version = element[2].text
-        cmd = "mvn install:install-file -Dfile=%s -DgroupId=%s -DartifactId=%s -Dversion=%s -Dpackaging=jar -DgeneratePom=true" \
-            % (jarName, groupId, artfacttId, version)
-        return cmd
+from DependencyFetcher import Fetcher
 
 
 class TestFetcherScript(unittest.TestCase):
-    def pomFileToString(self, filepath):
-        file = open(filepath, "r").readlines()
-        return "\n".join(file)
 
     def testFindingAllDependencyFromPom(self):
-        pomFile = \
-        '<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\
-             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">\
-            <modelVersion>4.0.0</modelVersion>\
-            <artifactId>com.bdbizviz.ahwtutils</artifactId>\
-            <packaging>bundle</packaging>\
-            <parent>\
-                <groupId>bizviz</groupId>\
-                <artifactId>com.bdbizviz</artifactId>\
-                <version>2.0.0</version>\
-            </parent>\
-            <dependencies>\
-                <dependency>\
-                    <groupId>joda-time</groupId>\
-                    <artifactId>joda-time</artifactId>\
-                    <version>2.8</version>\
-                </dependency>\
-                <dependency>\
-                    <groupId>org.apache.cxf</groupId>\
-                    <artifactId>cxf-rt-frontend-jaxrs</artifactId>\
-                    <version>2.7.11</version>\
-                </dependency>\
-            </dependencies>\
-            <build>\
-                <plugins>\
-                    <plugin>\
-                        <groupId>org.apache.felix</groupId>\
-                        <artifactId>maven-bundle-plugin</artifactId>\
-                        <version>2.3.7</version>\
-                        <extensions>true</extensions>\
-                    </plugin>\
-                </plugins>\
-            </build>\
-        </project>'
+        pomFile = './pom.xml'
 
         elements = Fetcher.parseAllDependencyFromPom(pomFile)
 
@@ -70,9 +19,36 @@ class TestFetcherScript(unittest.TestCase):
     def testTransformDependenciesElementToCommandLine(self):
         mvnCommand = "mvn install:install-file -Dfile=axis2-kernel-1.6.2.jar -DgroupId=joda-time -DartifactId=joda-time -Dversion=2.8 -Dpackaging=jar -DgeneratePom=true"
 
-        element = Fetcher.parseAllDependencyFromPom(self.pomFileToString('./pom.xml'))[0]
+        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[0]
         jarName = "axis2-kernel-1.6.2.jar"
         self.assertEqual(mvnCommand, Fetcher.transform(element, jarName))
+
+    def testFindingJarFileInWarLibrary(self):
+        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[0]
+        fileName = Fetcher.getFileName("./lib", element)
+        self.assertEqual("joda-time-2.8.jar", fileName)
+
+        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[1]
+        fileName = Fetcher.getFileName("./lib", element)
+        self.assertEqual("cxf-rt-frontend-jaxrs-2.7.11.jar", fileName)
+
+    def testCreateMavenShellScript(self):
+        pathToPom = "./pom.xml"
+        pathToLib = "./lib/"
+        pathToOutput = "./installScript.sh"
+
+        Fetcher.createShellScript(pathToPom, pathToLib, pathToOutput)
+
+        self.assertTrue(os.path.isfile(pathToOutput))
+        file = open(pathToOutput, "r")
+        lines = file.readlines()
+        file.close()
+
+        mvnCommand = "mvn install:install-file -Dfile=joda-time-2.8.jar -DgroupId=joda-time -DartifactId=joda-time -Dversion=2.8 -Dpackaging=jar -DgeneratePom=true"
+        self.assertEqual(mvnCommand, lines[1].rstrip())
+
+        mvnCommand = "mvn install:install-file -Dfile=cxf-rt-frontend-jaxrs-2.7.11.jar -DgroupId=org.apache.cxf -DartifactId=cxf-rt-frontend-jaxrs -Dversion=2.7.11 -Dpackaging=jar -DgeneratePom=true"
+        self.assertEqual(mvnCommand, lines[2].rstrip())
 
 
 if __name__ == '__main__':
