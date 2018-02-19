@@ -29,12 +29,15 @@ class Fetcher(object):
     def getFileName(cls, libPath, element):
         artifactId = element[1].text
         version = element[2].text
+        fileNamesMatchedByArtifact = []
         for fileName in sorted(os.listdir(libPath)):
             if fileName.endswith(".jar"):
-                if (artifactId in fileName) and (version in fileName):
-                    return fileName;
-
-
+                if (artifactId in fileName):
+                    fileNamesMatchedByArtifact.append(fileName)
+        for match in fileNamesMatchedByArtifact:
+            if len(match) > len(fileNamesMatchedByArtifact[0]):
+                fileNamesMatchedByArtifact.remove(match)
+        return fileNamesMatchedByArtifact[-1]
     @classmethod
     def createShellScript(cls, pathToPom, pathToLib, pathToOutput):
         shabangLine = "#!/bin/sh"
