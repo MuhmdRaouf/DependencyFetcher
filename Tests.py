@@ -55,71 +55,7 @@ class TestFetcherScript(unittest.TestCase):
         mvnCommand = "mvn install:install-file -Dfile=cxf-rt-frontend-jaxrs-2.7.11.jar -DgroupId=org.apache.cxf -DartifactId=cxf-rt-frontend-jaxrs -Dversion=2.7.11 -Dpackaging=jar -DgeneratePom=true"
         self.assertEqual(mvnCommand, lines[2].rstrip())
 
-    def testGettingNearestLowerVersionWhenNoMatchFound(self):
-        try:
-            targetJarName = "dummy-1.2.6.jar"
-            file = open("pom-test.xml", "w+")
-            file.write(
-                """
-    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <dependencies>
-            <dependency>
-                <groupId>dummy-time</groupId>
-                <artifactId>dummy</artifactId>
-                <version>1.3.4</version>
-            </dependency>
-        </dependencies>
-    </project>
-                """)
-            file.close()
 
-            open("./lib/dummy-1.2.6.jar", "w+").close()
-            open("./lib/dummy-1.1.6.jar", "w+").close()
-            open("./lib/dummy-1.2.1.jar", "w+").close()
-
-            elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
-            fileName = Fetcher.findJarFilenameForDependency("./lib", elements[0])
-
-            self.assertEqual(targetJarName, fileName)
-        finally:
-            os.remove("./lib/dummy-1.2.6.jar")
-            os.remove("./lib/dummy-1.1.6.jar")
-            os.remove("./lib/dummy-1.2.1.jar")
-            os.remove("pom-test.xml")
-
-    def testGettingNearestUpperVesrionWhenNoMatchFound(self):
-        try:
-            targetJarName = "dummy-1.4.2.jar"
-            file = open("pom-test.xml", "w+")
-            file.write(
-                """
-    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <dependencies>
-            <dependency>
-                <groupId>dummy-time</groupId>
-                <artifactId>dummy</artifactId>
-                <version>1.3.4</version>
-            </dependency>
-        </dependencies>
-    </project>
-                """)
-            file.close()
-
-            open("./lib/dummy-1.4.2.jar", "w+").close()
-            open("./lib/dummy-1.4.6.jar", "w+").close()
-            open("./lib/dummy-1.5.1.jar", "w+").close()
-
-            elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
-            fileName = Fetcher.findJarFilenameForDependency("./lib", elements[0])
-
-            self.assertEqual(targetJarName, fileName)
-        finally:
-            os.remove("./lib/dummy-1.4.2.jar")
-            os.remove("./lib/dummy-1.4.6.jar")
-            os.remove("./lib/dummy-1.5.1.jar")
-            os.remove("pom-test.xml")
 
     def testSeparatingGreaterVersionedJarFiles(self):
         try:
