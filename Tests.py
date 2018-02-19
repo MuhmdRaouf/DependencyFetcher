@@ -24,13 +24,18 @@ class TestFetcherScript(unittest.TestCase):
         self.assertEqual(mvnCommand, Fetcher.transform(element, jarName))
 
     def testFindingJarFileInWarLibrary(self):
-        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[0]
-        fileName = Fetcher.getFileName("./lib", element)
+        elements = Fetcher.parseAllDependencyFromPom('./pom.xml')
+        fileName = Fetcher.getFileName("./lib", elements[0])
         self.assertEqual("joda-time-2.8.jar", fileName)
 
-        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[1]
-        fileName = Fetcher.getFileName("./lib", element)
+        fileName = Fetcher.getFileName("./lib", elements[1])
         self.assertEqual("cxf-rt-frontend-jaxrs-2.7.11.jar", fileName)
+        
+        fileName = Fetcher.getFileName("./lib", elements[2])
+        self.assertEqual("google-api-client-1.17.0-rc.jar", fileName)
+
+        fileName = Fetcher.getFileName("./lib", elements[3])
+        self.assertEqual("google-api-client-java6-1.17.0-rc.jar", fileName)
 
     def testCreateMavenShellScript(self):
         pathToPom = "./pom.xml"
@@ -49,16 +54,6 @@ class TestFetcherScript(unittest.TestCase):
 
         mvnCommand = "mvn install:install-file -Dfile=cxf-rt-frontend-jaxrs-2.7.11.jar -DgroupId=org.apache.cxf -DartifactId=cxf-rt-frontend-jaxrs -Dversion=2.7.11 -Dpackaging=jar -DgeneratePom=true"
         self.assertEqual(mvnCommand, lines[2].rstrip())
-
-
-    def testCreateAccurateFileName(self):
-        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[2]
-        fileName = Fetcher.getFileName("./lib", element)
-        self.assertEqual("google-api-client-1.17.0-rc.jar", fileName)
-
-        element = Fetcher.parseAllDependencyFromPom('./pom.xml')[3]
-        fileName = Fetcher.getFileName("./lib", element)
-        self.assertEqual("google-api-client-java6-1.17.0-rc.jar", fileName)
 
 
 if __name__ == '__main__':

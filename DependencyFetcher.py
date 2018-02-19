@@ -54,6 +54,7 @@ class Fetcher(object):
 
         outputFile.close()
 
+
 if __name__ == "__main__":
     pathToPom = sys.argv[1]
     pathToLib = sys.argv[2]
