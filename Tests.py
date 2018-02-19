@@ -88,41 +88,74 @@ class TestFetcherScript(unittest.TestCase):
             os.remove("./lib/dummy-1.2.1.jar")
             os.remove("pom-test.xml")
 
-    # def testGettingNearestUpperVesrionWhenNoMatchFound(self):
-    #     try:
-    #         targetJarName = "dummy-1.4.2.jar"
-    #         file = open("pom-test.xml", "w+")
-    #         file.write(
-    #             """
-    # <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    #          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    #     <dependencies>
-    #         <dependency>
-    #             <groupId>dummy-time</groupId>
-    #             <artifactId>dummy</artifactId>
-    #             <version>1.3.4</version>
-    #         </dependency>
-    #     </dependencies>
-    # </project>
-    #             """)
-    #         file.close()
-    #
-    #         open("./lib/dummy-1.4.2.jar", "w+").close()
-    #         open("./lib/dummy-1.4.6.jar", "w+").close()
-    #         open("./lib/dummy-1.5.1.jar", "w+").close()
-    #
-    #         elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
-    #         fileName = Fetcher.getFileName("./lib", elements[0])
-    #
-    #         self.assertEqual(targetJarName, fileName)
-    #     finally:
-    #         os.remove("./lib/dummy-1.4.2.jar")
-    #         os.remove("./lib/dummy-1.4.6.jar")
-    #         os.remove("./lib/dummy-1.5.1.jar")
-    #         os.remove("pom-test.xml")
+    def testGettingNearestUpperVesrionWhenNoMatchFound(self):
+        try:
+            targetJarName = "dummy-1.4.2.jar"
+            file = open("pom-test.xml", "w+")
+            file.write(
+                """
+    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <dependencies>
+            <dependency>
+                <groupId>dummy-time</groupId>
+                <artifactId>dummy</artifactId>
+                <version>1.3.4</version>
+            </dependency>
+        </dependencies>
+    </project>
+                """)
+            file.close()
 
+            open("./lib/dummy-1.4.2.jar", "w+").close()
+            open("./lib/dummy-1.4.6.jar", "w+").close()
+            open("./lib/dummy-1.5.1.jar", "w+").close()
 
+            elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
+            fileName = Fetcher.findJarFilenameForDependency("./lib", elements[0])
 
+            self.assertEqual(targetJarName, fileName)
+        finally:
+            os.remove("./lib/dummy-1.4.2.jar")
+            os.remove("./lib/dummy-1.4.6.jar")
+            os.remove("./lib/dummy-1.5.1.jar")
+            os.remove("pom-test.xml")
+
+    def testSeparatingGreaterVersionedJarFiles(self):
+        try:
+            targetJar = 'dummy-1.4.2.jar'
+            fileNames = ['dummy-1.4.5.jar', 'dummy-1.4.4.jar', '.dummy-1.4.3.jar']
+            targetVersion = "1.4.2"
+
+            for file in fileNames:
+                open(file, "w+").close()
+
+            piles = Fetcher.separateJarFilesByVersion(fileNames, targetVersion)
+
+            self.assertEqual(3, len(piles[1]))
+
+            self.assertEqual('dummy-1.4.4.jar', piles[1][1])
+        finally:
+            for file in fileNames:
+                os.remove(file)
+
+    def testSeparatingLowerVersionedJarFiles(self):
+        try:
+            targetJar = 'dummy-1.4.2.jar'
+            fileNames = ['dummy-1.4.1.jar', 'dummy-1.4.0.jar', 'dummy-1.3.9']
+            targetVersion = "1.4.2"
+
+            for file in fileNames:
+                open(file, "w+").close()
+
+            piles = Fetcher.separateJarFilesByVersion(fileNames, targetVersion)
+
+            self.assertEqual(3, len(piles[0]))
+
+            self.assertEqual('dummy-1.4.0.jar', piles[0][1])
+        finally:
+            for file in fileNames:
+                os.remove(file)
 
 
 if __name__ == '__main__':

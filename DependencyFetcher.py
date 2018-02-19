@@ -1,8 +1,8 @@
 import xml.etree.ElementTree as ET
 import os
-
 import sys
-
+import re
+from distutils.version import LooseVersion
 
 class Fetcher(object):
     namespace = "{http://maven.apache.org/POM/4.0.0}"
@@ -28,6 +28,7 @@ class Fetcher(object):
     @classmethod
     def findJarFilenameForDependency(cls, libPath, element):
         artifactId = element[1].text
+        targetVersion = element[2].text
         fileNamesMatchedByArtifact = []
         smallestMatchSize = (10**9)
 
@@ -37,7 +38,12 @@ class Fetcher(object):
         cls.removeAllFilenamesLongerThanTheCurrentArtifactId\
             (fileNamesMatchedByArtifact, smallestMatchSize)
 
-        return fileNamesMatchedByArtifact[-1]
+        piles = cls.separateJarFilesByVersion(fileNamesMatchedByArtifact, targetVersion)
+
+        if len(piles[1]) != 0:
+            return piles[1][0]
+        else:
+            return piles[0][-1]
 
     @classmethod
     def removeAllFilenamesLongerThanTheCurrentArtifactId(cls, fileNamesMatchedByArtifact, smallestMatchSize):
@@ -68,11 +74,27 @@ class Fetcher(object):
         for element in dependencies:
             filename = cls.findJarFilenameForDependency(pathToLib, element)
             currentCommand = cls.transform(element, filename)
-            outputLines.append(currentCommand);
+            outputLines.append(currentCommand)
 
-        outputFile.writelines("\n".join(outputLines));
+        outputFile.writelines("\n".join(outputLines))
 
         outputFile.close()
+
+    @classmethod
+    def separateJarFilesByVersion(cls, fileNames, targetVersion):
+        greaterOrEqualVersionsPile = []
+        smallerVersionsPile = []
+
+        for file in fileNames:
+            currentVersion = re.search(r'-(\d)(.([0-9]*))*', file).group()[1:-4]
+            if LooseVersion(currentVersion) >= LooseVersion(targetVersion):
+                greaterOrEqualVersionsPile.append(file)
+            else:
+                smallerVersionsPile.append(file)
+        pile = []
+        pile.append(smallerVersionsPile)
+        pile.append(greaterOrEqualVersionsPile)
+        return pile
 
 
 if __name__ == "__main__":
