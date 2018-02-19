@@ -38,6 +38,9 @@ class Fetcher(object):
         cls.removeAllFilenamesLongerThanTheCurrentArtifactId\
             (fileNamesMatchedByArtifact, smallestMatchSize)
 
+        if len(fileNamesMatchedByArtifact) == 1:
+            return fileNamesMatchedByArtifact[0]
+
         piles = cls.separateJarFilesByVersion(fileNamesMatchedByArtifact, targetVersion)
 
         if len(piles[1]) != 0:
@@ -84,9 +87,8 @@ class Fetcher(object):
     def separateJarFilesByVersion(cls, fileNames, targetVersion):
         greaterOrEqualVersionsPile = []
         smallerVersionsPile = []
-
         for file in fileNames:
-            currentVersion = re.search(r'-(\d)(.([0-9]*))*', file).group()[1:-4]
+            currentVersion = cls.getVersion(file)
             if LooseVersion(currentVersion) >= LooseVersion(targetVersion):
                 greaterOrEqualVersionsPile.append(file)
             else:
@@ -95,6 +97,11 @@ class Fetcher(object):
         pile.append(smallerVersionsPile)
         pile.append(greaterOrEqualVersionsPile)
         return pile
+
+    @classmethod
+    def getVersion(cls, file):
+        version = re.search(r'-(\d)(.([0-9]*))*', file)
+        return version.group()[1:-4]
 
 
 if __name__ == "__main__":
