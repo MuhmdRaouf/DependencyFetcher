@@ -26,18 +26,35 @@ class Fetcher(object):
         return cmd
 
     @classmethod
-    def getFileName(cls, libPath, element):
+    def findJarFilenameForDependency(cls, libPath, element):
         artifactId = element[1].text
-        version = element[2].text
         fileNamesMatchedByArtifact = []
+        smallestMatchSize = (10**9)
+
+        smallestMatchSize = cls.sortAndFindAllJarsWithSimilarJarNames\
+            (artifactId, fileNamesMatchedByArtifact, libPath, smallestMatchSize)
+
+        cls.removeAllFilenamesLongerThanTheCurrentArtifactId\
+            (fileNamesMatchedByArtifact, smallestMatchSize)
+
+        return fileNamesMatchedByArtifact[-1]
+
+    @classmethod
+    def removeAllFilenamesLongerThanTheCurrentArtifactId(cls, fileNamesMatchedByArtifact, smallestMatchSize):
+        for match in fileNamesMatchedByArtifact:
+            if len(match) > smallestMatchSize:
+                fileNamesMatchedByArtifact.remove(match)
+
+    @classmethod
+    def sortAndFindAllJarsWithSimilarJarNames(cls, artifactId, fileNamesMatchedByArtifact, libPath, smallestMatchSize):
         for fileName in sorted(os.listdir(libPath)):
             if fileName.endswith(".jar"):
-                if (artifactId in fileName):
+                if artifactId in fileName:
                     fileNamesMatchedByArtifact.append(fileName)
-        for match in fileNamesMatchedByArtifact:
-            if len(match) > len(fileNamesMatchedByArtifact[0]):
-                fileNamesMatchedByArtifact.remove(match)
-        return fileNamesMatchedByArtifact[-1]
+                    if smallestMatchSize > len(fileName):
+                        smallestMatchSize = len(fileName)
+        return smallestMatchSize
+
     @classmethod
     def createShellScript(cls, pathToPom, pathToLib, pathToOutput):
         shabangLine = "#!/bin/sh"
@@ -49,7 +66,7 @@ class Fetcher(object):
         outputLines = []
 
         for element in dependencies:
-            filename = cls.getFileName(pathToLib, element)
+            filename = cls.findJarFilenameForDependency(pathToLib, element)
             currentCommand = cls.transform(element, filename)
             outputLines.append(currentCommand);
 

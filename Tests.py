@@ -25,16 +25,16 @@ class TestFetcherScript(unittest.TestCase):
 
     def testFindingJarFileInWarLibrary(self):
         elements = Fetcher.parseAllDependencyFromPom('./pom.xml')
-        fileName = Fetcher.getFileName("./lib", elements[0])
+        fileName = Fetcher.findJarFilenameForDependency("./lib", elements[0])
         self.assertEqual("joda-time-2.8.jar", fileName)
 
-        fileName = Fetcher.getFileName("./lib", elements[1])
+        fileName = Fetcher.findJarFilenameForDependency("./lib", elements[1])
         self.assertEqual("cxf-rt-frontend-jaxrs-2.7.11.jar", fileName)
 
-        fileName = Fetcher.getFileName("./lib", elements[2])
+        fileName = Fetcher.findJarFilenameForDependency("./lib", elements[2])
         self.assertEqual("google-api-client-1.17.0-rc.jar", fileName)
 
-        fileName = Fetcher.getFileName("./lib", elements[3])
+        fileName = Fetcher.findJarFilenameForDependency("./lib", elements[3])
         self.assertEqual("google-api-client-java6-1.17.0-rc.jar", fileName)
 
     def testCreateMavenShellScript(self):
@@ -56,37 +56,73 @@ class TestFetcherScript(unittest.TestCase):
         self.assertEqual(mvnCommand, lines[2].rstrip())
 
     def testGettingNearestLowerVersionWhenNoMatchFound(self):
-        targetJarName = "dummy-1.2.6.jar"
-        file = open("pom-test.xml", "w+")
-        file.write(
-            """
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <dependencies>
-        <dependency>
-            <groupId>dummy-time</groupId>
-            <artifactId>dummy</artifactId>
-            <version>1.3.4</version>
-        </dependency>
-    </dependencies>
-</project>
-            """)
+        try:
+            targetJarName = "dummy-1.2.6.jar"
+            file = open("pom-test.xml", "w+")
+            file.write(
+                """
+    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <dependencies>
+            <dependency>
+                <groupId>dummy-time</groupId>
+                <artifactId>dummy</artifactId>
+                <version>1.3.4</version>
+            </dependency>
+        </dependencies>
+    </project>
+                """)
+            file.close()
 
-        file.close()
+            open("./lib/dummy-1.2.6.jar", "w+").close()
+            open("./lib/dummy-1.1.6.jar", "w+").close()
+            open("./lib/dummy-1.2.1.jar", "w+").close()
 
-        open("./lib/dummy-1.2.6.jar", "w+").close()
-        open("./lib/dummy-1.1.6.jar", "w+").close()
-        open("./lib/dummy-1.2.1.jar", "w+").close()
+            elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
+            fileName = Fetcher.findJarFilenameForDependency("./lib", elements[0])
 
-        elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
-        fileName = Fetcher.getFileName("./lib", elements[0])
+            self.assertEqual(targetJarName, fileName)
+        finally:
+            os.remove("./lib/dummy-1.2.6.jar")
+            os.remove("./lib/dummy-1.1.6.jar")
+            os.remove("./lib/dummy-1.2.1.jar")
+            os.remove("pom-test.xml")
 
-        os.remove("./lib/dummy-1.2.6.jar")
-        os.remove("./lib/dummy-1.1.6.jar")
-        os.remove("./lib/dummy-1.2.1.jar")
-        os.remove("pom-test.xml")
+    # def testGettingNearestUpperVesrionWhenNoMatchFound(self):
+    #     try:
+    #         targetJarName = "dummy-1.4.2.jar"
+    #         file = open("pom-test.xml", "w+")
+    #         file.write(
+    #             """
+    # <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    #          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    #     <dependencies>
+    #         <dependency>
+    #             <groupId>dummy-time</groupId>
+    #             <artifactId>dummy</artifactId>
+    #             <version>1.3.4</version>
+    #         </dependency>
+    #     </dependencies>
+    # </project>
+    #             """)
+    #         file.close()
+    #
+    #         open("./lib/dummy-1.4.2.jar", "w+").close()
+    #         open("./lib/dummy-1.4.6.jar", "w+").close()
+    #         open("./lib/dummy-1.5.1.jar", "w+").close()
+    #
+    #         elements = Fetcher.parseAllDependencyFromPom('./pom-test.xml')
+    #         fileName = Fetcher.getFileName("./lib", elements[0])
+    #
+    #         self.assertEqual(targetJarName, fileName)
+    #     finally:
+    #         os.remove("./lib/dummy-1.4.2.jar")
+    #         os.remove("./lib/dummy-1.4.6.jar")
+    #         os.remove("./lib/dummy-1.5.1.jar")
+    #         os.remove("pom-test.xml")
 
-        self.assertEqual(targetJarName, fileName)
+
+
 
 
 if __name__ == '__main__':
