@@ -92,6 +92,33 @@ class TestFetcherScript(unittest.TestCase):
         finally:
             for file in fileNames:
                 os.remove(file)
+    def testNotIncludingDependenciesWithNoSpecifiedVersionNumber(self):
+        shabangLine = "#!/bin/sh"
+        file = open("pom-test.xml", "w+")
+
+        file.write(
+            """
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <dependencies>
+        <dependency>
+            <groupId>com.dummy</groupId>
+            <artifactId>dummy</artifactId>
+            <version>${project.version}</version>
+        </dependency>>
+    </dependencies>
+</project>
+            """)
+        file.close()
+
+        Fetcher.createShellScript('pom-test.xml', './lib', 'installScript.sh')
+
+        outputFile = open('installScript.sh', 'r')
+        fileLines = outputFile.readlines()
+        outputFile.close()
+
+        self.assertEqual(1, len(fileLines))
+        self.assertEqual(shabangLine, fileLines[0].rstrip())
 
 
 if __name__ == '__main__':
