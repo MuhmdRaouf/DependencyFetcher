@@ -123,5 +123,11 @@ class TestFetcherScript(unittest.TestCase):
         finally:
             os.remove('pom-test.xml')
 
+    def testNotHavingToWritePOMXMLInPathToPom(self):
+
+        Fetcher.createShellScript('./','./lib','./installScript.sh')
+
+        self.assertTrue(os.path.exists('./installScript.sh'))
+
 if __name__ == '__main__':
     unittest.main()

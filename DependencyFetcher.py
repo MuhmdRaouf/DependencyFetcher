@@ -70,6 +70,8 @@ class Fetcher(object):
         outputFile = open(pathToOutput, "w+")
         outputFile.write(shabangLine + "\n")
 
+        if not pathToPom.endswith(".xml"):
+            pathToPom += "pom.xml"
         dependencies = Fetcher.parseAllDependencyFromPom(pathToPom)
 
         outputLines = []
