@@ -38,7 +38,9 @@ class Fetcher(object):
         cls.removeAllFilenamesLongerThanTheCurrentArtifactId\
             (fileNamesMatchedByArtifact, smallestMatchSize)
 
-        if len(fileNamesMatchedByArtifact) == 1:
+        if len(fileNamesMatchedByArtifact) == 0:
+            return ''
+        elif len(fileNamesMatchedByArtifact) == 1:
             return fileNamesMatchedByArtifact[0]
 
         piles = cls.separateJarFilesByVersion(fileNamesMatchedByArtifact, targetVersion)
@@ -83,8 +85,12 @@ class Fetcher(object):
             if '$' in currentVersion:
                 continue
 
-            filename = cls.findJarFilenameForDependency(pathToLib, element)
-            currentCommand = cls.transform(element, filename)
+            fileName = cls.findJarFilenameForDependency(pathToLib, element)
+
+            if len(fileName) == 0:
+                continue
+
+            currentCommand = cls.transform(element, fileName)
             outputLines.append(currentCommand)
 
         outputFile.writelines("\n".join(outputLines))

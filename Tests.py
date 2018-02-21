@@ -172,5 +172,11 @@ class TestFetcherScript(unittest.TestCase):
         file = open(fileName, 'w+')
         file.close()
 
+    def testExceptionRaisedWhenNoJarIsFound(self):
+        Fetcher.createShellScript('./', './', './installScript.sh')
+
+        self.assertTrue(os.path.exists('./installScript.sh'))
+
+
 if __name__ == '__main__':
     unittest.main()
