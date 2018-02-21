@@ -177,6 +177,5 @@ class TestFetcherScript(unittest.TestCase):
 
         self.assertTrue(os.path.exists('./installScript.sh'))
 
-
 if __name__ == '__main__':
     unittest.main()
