@@ -124,10 +124,53 @@ class TestFetcherScript(unittest.TestCase):
             os.remove('pom-test.xml')
 
     def testNotHavingToWritePOMXMLInPathToPom(self):
+        try:
+            Fetcher.createShellScript('./','./lib','./installScript.sh')
 
-        Fetcher.createShellScript('./','./lib','./installScript.sh')
+            self.assertTrue(os.path.exists('./installScript.sh'))
 
-        self.assertTrue(os.path.exists('./installScript.sh'))
+            outputFile = open('installScript.sh', 'r')
+            outputLines = outputFile.readlines()
+            outputFile.close()
+
+            self.assertEqual(5, len(outputLines))
+
+
+        finally:
+            os.remove('./installScript.sh')
+
+    def testLooseVersionCastingProblem(self):
+        try:
+            pomFile = open("pom-test2.xml", "w+")
+            pomFile.write(
+            """
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <dependencies>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-drive</artifactId>
+            <version>v2-rev110-1.17.0-rc</version>
+        </dependency>>
+    </dependencies>
+</project>
+            """)
+            pomFile.close()
+
+            elements = Fetcher.parseAllDependencyFromPom('./pom-test2.xml')
+
+            self.createFile("./lib/google-api-services-drive-v2-rev110-1.17.0-rc.jar")
+
+            piles = Fetcher.findJarFilenameForDependency('./lib', elements[0])
+
+            self.assertIsNotNone(piles)
+        finally:
+            os.remove("./lib/google-api-services-drive-v2-rev110-1.17.0-rc.jar")
+            os.remove("pom-test2.xml")
+
+    def createFile(self, fileName):
+        file = open(fileName, 'w+')
+        file.close()
 
 if __name__ == '__main__':
     unittest.main()
