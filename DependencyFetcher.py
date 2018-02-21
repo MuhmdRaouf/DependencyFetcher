@@ -72,14 +72,17 @@ class Fetcher(object):
 
         if not pathToPom.endswith(".xml"):
             pathToPom += "pom.xml"
+
         dependencies = Fetcher.parseAllDependencyFromPom(pathToPom)
 
         outputLines = []
 
         for element in dependencies:
             currentVersion = element[2].text
+
             if '$' in currentVersion:
                 continue
+
             filename = cls.findJarFilenameForDependency(pathToLib, element)
             currentCommand = cls.transform(element, filename)
             outputLines.append(currentCommand)
